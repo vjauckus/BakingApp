@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#FF9609</color>
+    <color name="colorPrimaryDark">#2F1D1A</color>
+    <color name="colorAccent">#FF4081</color>
+
+  <!--  <color name="colorPrimary">#1A2930</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#FF4081</color> -->
+
+    <color name="colorButtonIngredients">#00c0c8</color>
+
+    <!-- Colors for text -->
+
+    <color name="secondary_text">#727272</color>
+    <color name="background_reviews">#E0E0E0</color>
+    <color name="tan_background">#FFFae3</color>
+    <color name="white">#FFFFFF</color>
+</resources>

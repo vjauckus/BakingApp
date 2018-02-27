@@ -1,6 +1,6 @@
 package com.android.udacity.vjauckus.mybackingapp.fragments;
 
-import android.content.Context;
+        import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -22,13 +22,18 @@ import com.android.udacity.vjauckus.mybackingapp.R;
 import com.android.udacity.vjauckus.mybackingapp.activities.StepDetailActivity;
 import com.android.udacity.vjauckus.mybackingapp.models.StepsModel;
 import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -46,7 +51,7 @@ import butterknife.Unbinder;
  *  Copyright (C) 2018 VJauckus
  */
 
-public class StepDetailsFragment extends Fragment implements View.OnClickListener{
+public class StepDetailsFragment extends Fragment implements View.OnClickListener, ExoPlayer.EventListener{
 
     private final static String TAG = StepDetailsFragment.class.getSimpleName();
 
@@ -78,6 +83,7 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
     private PlaybackStateCompat.Builder mStateBuilder;
     long videoPosition;
     private int mStepNumber;
+    boolean mNetworkOk;
 
     //empty Constructor
     public StepDetailsFragment(){
@@ -90,58 +96,76 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
 
         unbinder = ButterKnife.bind(this, rootView);
 
-        if (savedInstanceState == null){
-            ConnectivityManager connMgr = (ConnectivityManager)
+        mNetworkOk = checkNetworkConnection();
+
+        if (mNetworkOk){
+            if (savedInstanceState == null){
+        /*    ConnectivityManager connMgr = (ConnectivityManager)
                     getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 
-
-            if (getVideoUrl() != null && (networkInfo!= null && networkInfo.isConnected())){
-                //Video is here
-                mNoVideo.setVisibility(View.GONE);
-                mNoVideoImage.setVisibility(View.GONE);
-                videoPosition = 0;
-                initializeMediaPlayer(Uri.parse(getVideoUrl()));
-               // mPlayerView.setVisibility(View.VISIBLE);
-            }
-            else {
-                //Video is not available
-                mPlayerView.setVisibility(View.GONE);
-                mNoVideo.setVisibility(View.VISIBLE);
-                mNoVideoImage.setVisibility(View.VISIBLE);
-            }
-
-
-        }
-        if (savedInstanceState != null){
-            mStepsModel = (StepsModel) savedInstanceState.getSerializable("step");
-            if ( getVideoUrl() != null){
-                //Video is here
-                mNoVideoImage.setVisibility(View.GONE);
-                mNoVideo.setVisibility(View.GONE);
-               // mPlayerView.setVisibility(View.VISIBLE);
-                if(savedInstanceState.containsKey("videoPosition")){
-                    videoPosition = savedInstanceState.getLong("videoPosition");
-                   // Log.v(TAG, "Video Position: "+videoPosition);
+*/
+                if (getVideoUrl() != null && mNetworkOk){
+                    //Video is here
+                    mNoVideo.setVisibility(View.GONE);
+                    mNoVideoImage.setVisibility(View.GONE);
+                    videoPosition = 0;
+                    initializeMediaPlayer(Uri.parse(getVideoUrl()));
+                    // mPlayerView.setVisibility(View.VISIBLE);
                 }
-                initializeMediaPlayer(Uri.parse(getVideoUrl()));
+                else {
+                    //Video is not available
+                    mPlayerView.setVisibility(View.GONE);
+                    mNoVideo.setVisibility(View.VISIBLE);
+                    mNoVideoImage.setVisibility(View.VISIBLE);
+                }
+
+
             }
-            else {
-                //Video is not available
-                mPlayerView.setVisibility(View.GONE);
-                mNoVideo.setVisibility(View.VISIBLE);
-                mNoVideoImage.setVisibility(View.VISIBLE);
+            if (savedInstanceState != null){
+                mStepsModel = (StepsModel) savedInstanceState.getSerializable("step");
+                if ( getVideoUrl() != null){
+                    //Video is here
+                    mNoVideoImage.setVisibility(View.GONE);
+                    mNoVideo.setVisibility(View.GONE);
+                    // mPlayerView.setVisibility(View.VISIBLE);
+                    if(savedInstanceState.containsKey("videoPosition")){
+                        videoPosition = savedInstanceState.getLong("videoPosition");
+                        // Log.v(TAG, "Video Position: "+videoPosition);
+                    }
+                    initializeMediaPlayer(Uri.parse(getVideoUrl()));
+                }
+                else {
+                    //Video is not available
+                    mPlayerView.setVisibility(View.GONE);
+                    mNoVideo.setVisibility(View.VISIBLE);
+                    mNoVideoImage.setVisibility(View.VISIBLE);
+                }
             }
+            mLongDescription.setText(mStepsModel.getLongDescription());
+
+            // Initialize the Media Session.
+            initializeMediaSession();
+
+            mPrevious.setOnClickListener(this);
+            mNext.setOnClickListener(this);
+
+
         }
-        mLongDescription.setText(mStepsModel.getLongDescription());
 
-        // Initialize the Media Session.
-        initializeMediaSession();
+        else {
+            //No Internet Connection
+            mPlayerView.setVisibility(View.GONE);
+            mNoVideo.setVisibility(View.VISIBLE);
+            mNoVideo.setText(getResources().getString(R.string.internet_connection_error));
+            mNoVideoImage.setVisibility(View.GONE);
 
-        mPrevious.setOnClickListener(this);
-        mNext.setOnClickListener(this);
+            // Toast.makeText(getContext().getApplicationContext(), getString(R.string.check_internet), Toast.LENGTH_SHORT).show();
+
+        }
 
         return rootView;
+
     }
 
     @Override
@@ -149,16 +173,52 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
         super.onAttach(context);
     }
 
+
+    public boolean checkNetworkConnection(){
+        ConnectivityManager connMgr = (ConnectivityManager)
+                getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+
+        return   networkInfo!= null && networkInfo.isConnected();
+    }
+
+
+    @Override
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+    }
+
+    @Override
+    public void onPositionDiscontinuity() {
+
+    }
+
+    @Override
+    public void onTimelineChanged(Timeline timeline, Object manifest) {
+
+    }
+
+    @Override
+    public void onPlayerError(ExoPlaybackException error) {
+
+    }
+
+    @Override
+    public void onLoadingChanged(boolean isLoading) {
+
+    }
+
     @Override
     public void onClick(View view) {
 
-       // Log.v(TAG, "Position of Step is: "+ mStepNumber);
+        // Log.v(TAG, "Position of Step is: "+ mStepNumber);
 
         switch (view.getId()){
             case R.id.bt_recycler_previous:
-              //  Log.v(TAG, "Button Previous was clicked");
+                //  Log.v(TAG, "Button Previous was clicked");
                 if (mStepNumber == 0){
-                   // Log.v(TAG, "Position is still 0, because FIRST Step."+ mStepNumber);
+                    // Log.v(TAG, "Position is still 0, because FIRST Step."+ mStepNumber);
 
                     Toast.makeText(getActivity().getApplicationContext(),getString(R.string.firstPositionOfSteps), Toast.LENGTH_SHORT).show();
                 }
@@ -170,13 +230,13 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
                 break;
             case R.id.bt_recycler_next:
 
-               // Log.v(TAG, "Button Next was clicked");
+                // Log.v(TAG, "Button Next was clicked");
                 if (mStepNumber < mStepsList.size() - 1){
                     mStepNumber++;
                     replaceFragment();
                 }
                 else {
-                   // Log.v(TAG, "Position is still the same, because LAST Step."+ mStepNumber);
+                    // Log.v(TAG, "Position is still the same, because LAST Step."+ mStepNumber);
 
                     Toast.makeText(getActivity().getApplicationContext(),getString(R.string.lastPositionOfSteps), Toast.LENGTH_SHORT).show();
                 }
@@ -243,7 +303,7 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
                     new DefaultDataSourceFactory(getActivity(), userAgent), new DefaultExtractorsFactory(),
                     null,null);
             if (videoPosition > 0){
-              //  Log.v(TAG,"Play AGAIN from position: "+videoPosition);
+                //  Log.v(TAG,"Play AGAIN from position: "+videoPosition);
                 mExoPlayer.seekTo(videoPosition);
             }
             mExoPlayer.prepare(mediaSource);
@@ -270,9 +330,9 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
         mStateBuilder = new PlaybackStateCompat.Builder()
                 .setActions(
                         PlaybackStateCompat.ACTION_PLAY |
-                        PlaybackStateCompat.ACTION_PAUSE |
+                                PlaybackStateCompat.ACTION_PAUSE |
                                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-                        PlaybackStateCompat.ACTION_PLAY_PAUSE);
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE);
         //My SessionCallbacks has methods that handle callbacks from the media controller
         mMediaSession.setCallback(new MySessionCallback());
 
@@ -309,6 +369,26 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
         }
 
     }
+    /**
+     * Method that is called when the ExoPlayer state changes. Used to update the MediaSession
+     * PlayBackState to keep in sync, and post the media notification.
+     * @param playWhenReady true if ExoPlayer is playing, false if it's paused.
+     * @param playbackState int describing the state of ExoPlayer. Can be STATE_READY, STATE_IDLE,
+     *                      STATE_BUFFERING, or STATE_ENDED.
+     */
+    @Override
+    public void onPlayerStateChanged(boolean playWhenReady, int playbackState){
+
+        if ((playbackState == ExoPlayer.STATE_READY) && playWhenReady) {
+            mStateBuilder.setState(PlaybackStateCompat.STATE_PLAYING,
+                    mExoPlayer.getCurrentPosition(), 1f);
+        } else if ((playbackState == ExoPlayer.STATE_READY)) {
+            mStateBuilder.setState(PlaybackStateCompat.STATE_PAUSED,
+                    mExoPlayer.getCurrentPosition(), 1f);
+        }
+        mMediaSession.setPlaybackState(mStateBuilder.build());
+
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -324,20 +404,55 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
     @Override
     public void onPause() {
         super.onPause();
-        if (mStepsModel != null){
+        // if (mStepsModel != null){
+        if (Util.SDK_INT <= 23){
             releasePlayer();
         }
+
+        // }
     }
 
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (Util.SDK_INT > 23){
+            if (getVideoUrl() != null && mNetworkOk){
+                //Video is here
+                initializeMediaPlayer(Uri.parse(getVideoUrl()));
+
+            }
+
+        }
+    }
     /**
      * Release the player when the fragment is stopped.
      */
     @Override
     public void onStop() {
         super.onStop();
-        if (mStepsModel != null){
+        // if (mStepsModel != null){
+        if (Util.SDK_INT > 23){
             releasePlayer();
         }
+
+        // }
+    }
+
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (Util.SDK_INT <= 23 || mExoPlayer == null){
+            if (getVideoUrl() != null && mNetworkOk){
+                //Video is here
+                initializeMediaPlayer(Uri.parse(getVideoUrl()));
+
+            }
+        }
+
     }
 
     @Override
@@ -365,3 +480,4 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
 
 
 }
+

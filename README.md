@@ -22,8 +22,12 @@ The fragments will be used to create responsive design that workes on phone and 
 
 6. The user can navigate between recipes through previous/next buttons.
 
-Please see here what the screens look like:
+Please see here what the screens look like on Phone:
 
-![Main View](https://github.com/vjauckus/PopMovies_Stage_2/blob/master/Main_View.png)
+![Main View](https://github.com/vjauckus/BakingApp/blob/master/BakingApp_MainView_Phone.png)
 
-![Movies Details](https://github.com/vjauckus/PopMovies_Stage_2/blob/master/Movie_Details.png)
+![Recipe Details](https://github.com/vjauckus/BakingApp/blob/master/BakingApp_Details_Phone.png)
+
+Please see here what the screens look like on Tablet:
+
+![Recipe Details](https://github.com/vjauckus/BakingApp/blob/master/BakingApp_Details_Tablet.png)

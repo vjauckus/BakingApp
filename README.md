@@ -21,3 +21,9 @@ The fragments will be used to create responsive design that workes on phone and 
 5. Use can add a widget to store the ingredients of a recipe.
 
 6. The user can navigate between recipes through previous/next buttons.
+
+Please see here what the screens look like:
+
+![Main View](https://github.com/vjauckus/PopMovies_Stage_2/blob/master/Main_View.png)
+
+![Movies Details](https://github.com/vjauckus/PopMovies_Stage_2/blob/master/Movie_Details.png)

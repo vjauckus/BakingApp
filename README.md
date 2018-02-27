@@ -19,3 +19,5 @@ The fragments will be used to create responsive design that workes on phone and 
 4. Leverage third-party library also like Picasso (Image loading) and Butterknife von Jake Wharton(for Annotations).
 
 5. Use can add a widget to store the ingredients of a recipe.
+
+6. The user can navigate between recipes through previous/next buttons.

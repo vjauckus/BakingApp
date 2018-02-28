@@ -84,7 +84,7 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
     long videoPosition;
     private int mStepNumber;
     boolean mNetworkOk;
-
+    private boolean shouldAutoPlay;
     //empty Constructor
     public StepDetailsFragment(){
 
@@ -93,6 +93,7 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_step_details, container, false);
+
 
         unbinder = ButterKnife.bind(this, rootView);
 
@@ -107,6 +108,7 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
 */
                 if (getVideoUrl() != null && mNetworkOk){
                     //Video is here
+                    shouldAutoPlay = true;
                     mNoVideo.setVisibility(View.GONE);
                     mNoVideoImage.setVisibility(View.GONE);
                     videoPosition = 0;
@@ -123,7 +125,9 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
 
             }
             if (savedInstanceState != null){
+                //when device is rooted or any thing else
                 mStepsModel = (StepsModel) savedInstanceState.getSerializable("step");
+                shouldAutoPlay = savedInstanceState.getBoolean("autoPlay");
                 if ( getVideoUrl() != null){
                     //Video is here
                     mNoVideoImage.setVisibility(View.GONE);
@@ -295,19 +299,22 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
             TrackSelector trackSelector = new DefaultTrackSelector();
             LoadControl loadControl = new DefaultLoadControl();
             mExoPlayer = ExoPlayerFactory.newSimpleInstance(getActivity(), trackSelector, loadControl);
-            mPlayerView.setPlayer(mExoPlayer);
+
             //prepare the MediaSource
             String userAgent = Util.getUserAgent(getActivity(), "Backing instruction video");
 
             MediaSource mediaSource = new ExtractorMediaSource(mediaUri,
                     new DefaultDataSourceFactory(getActivity(), userAgent), new DefaultExtractorsFactory(),
                     null,null);
-            if (videoPosition > 0){
+          /*  if (videoPosition > 0){
                 //  Log.v(TAG,"Play AGAIN from position: "+videoPosition);
                 mExoPlayer.seekTo(videoPosition);
-            }
+            }*/
             mExoPlayer.prepare(mediaSource);
-            mExoPlayer.setPlayWhenReady(true);
+            mExoPlayer.setPlayWhenReady(shouldAutoPlay);
+            mExoPlayer.seekTo(videoPosition);
+            mPlayerView.setPlayer(mExoPlayer);
+
         }
     }
     /**
@@ -363,6 +370,7 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
         if (!mStepsModel.getVideoURL().equals("") && mExoPlayer != null){
             //save current position of player
             videoPosition = mExoPlayer.getCurrentPosition();
+            shouldAutoPlay = mExoPlayer.getPlayWhenReady();
             mExoPlayer.stop();
             mExoPlayer.release();
             mExoPlayer = null;
@@ -395,6 +403,7 @@ public class StepDetailsFragment extends Fragment implements View.OnClickListene
         super.onSaveInstanceState(outState);
         outState.putLong("videoPosition", videoPosition);
         outState.putSerializable("step", mStepsModel);
+        outState.putBoolean("autoPlay", shouldAutoPlay);
     }
 
 
